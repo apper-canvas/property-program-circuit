@@ -52,21 +52,21 @@ const PropertyDetailsPage = () => {
     }
   };
 
-  const toggleFavorite = async () => {
+const toggleFavorite = async () => {
     if (!property) return;
 
     try {
-      const isFavorite = favorites.some(fav => fav.propertyId === property.id);
+      const isFavorite = favorites.some(fav => (fav.property_id || fav.propertyId) === (property.Id || property.id));
 
       if (isFavorite) {
-        const favorite = favorites.find(fav => fav.propertyId === property.id);
-        await favoritesService.delete(favorite.id);
-        setFavorites(prev => prev.filter(fav => fav.propertyId !== property.id));
+        const favorite = favorites.find(fav => (fav.property_id || fav.propertyId) === (property.Id || property.id));
+        await favoritesService.delete(favorite.Id || favorite.id);
+        setFavorites(prev => prev.filter(fav => (fav.property_id || fav.propertyId) !== (property.Id || property.id)));
         toast.success('Removed from favorites');
       } else {
         const newFavorite = {
-          propertyId: property.id,
-          addedAt: new Date().toISOString()
+          property_id: property.Id || property.id,
+          added_at: new Date().toISOString()
         };
         const created = await favoritesService.create(newFavorite);
         setFavorites(prev => [...prev, created]);

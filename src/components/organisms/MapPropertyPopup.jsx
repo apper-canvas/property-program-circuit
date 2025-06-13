@@ -64,8 +64,8 @@ const MapPropertyPopup = ({ property, isFavorite, onToggleFavorite, onViewDetail
           </div>
 
           <div className="flex items-center space-x-2">
-            <Button
-              onClick={() => onToggleFavorite(property.id)}
+<Button
+              onClick={() => onToggleFavorite(property.Id || property.id)}
               className={`p-2 rounded-full border transition-colors ${
                 isFavorite
                   ? 'bg-red-50 border-red-200 text-red-600'

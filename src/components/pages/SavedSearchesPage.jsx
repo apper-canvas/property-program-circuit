@@ -46,19 +46,18 @@ const SavedSearchesPage = () => {
     }
   };
 
-  const deleteSavedSearch = async (searchId, searchName) => {
+const deleteSavedSearch = async (searchId, searchName) => {
     if (!window.confirm(`Are you sure you want to delete "${searchName}"?`)) return;
 
     try {
       await savedSearchesService.delete(searchId);
-      setSavedSearches(prev => prev.filter(search => search.id !== searchId));
+      setSavedSearches(prev => prev.filter(search => (search.Id || search.id) !== searchId));
       toast.success(`Deleted "${searchName}"`);
     } catch (err) {
       toast.error('Failed to delete saved search');
     }
   };
-
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
@@ -70,7 +69,7 @@ const SavedSearchesPage = () => {
       const newSearch = {
         name: formData.name.trim(),
         filters: formData.filters,
-        createdAt: new Date().toISOString()
+        created_at: new Date().toISOString()
       };
 
       const created = await savedSearchesService.create(newSearch);

@@ -38,34 +38,36 @@ const FavoritesPage = () => {
       setLoading(false);
     }
   };
-
-  const removeFavorite = async (propertyId, propertyTitle, favoriteIdToRemove) => {
+const removeFavorite = async (propertyId, propertyTitle, favoriteIdToRemove) => {
     try {
       await favoritesService.delete(favoriteIdToRemove);
-      setFavorites(prev => prev.filter(fav => fav.id !== favoriteIdToRemove));
+      setFavorites(prev => prev.filter(fav => (fav.Id || fav.id) !== favoriteIdToRemove));
       toast.success(`Removed "${propertyTitle}" from favorites`);
     } catch (err) {
       toast.error('Failed to remove from favorites');
     }
   };
 
-  const clearAllFavorites = async () => {
+const clearAllFavorites = async () => {
     if (!window.confirm('Are you sure you want to remove all favorites?')) return;
 
     try {
-      await Promise.all(favorites.map(fav => favoritesService.delete(fav.id)));
+      await Promise.all(favorites.map(fav => favoritesService.delete(fav.Id || fav.id)));
       setFavorites([]);
       toast.success('All favorites cleared');
     } catch (err) {
       toast.error('Failed to clear favorites');
     }
   };
-
-  const getFavoriteProperties = () => {
+const getFavoriteProperties = () => {
     const favoriteProperties = favorites
       .map(fav => {
-        const property = properties.find(p => p.id === fav.propertyId);
-        return property ? { ...property, addedAt: fav.addedAt, favoriteId: fav.id } : null;
+        const property = properties.find(p => (p.Id || p.id) === (fav.property_id || fav.propertyId));
+        return property ? { 
+          ...property, 
+          addedAt: fav.added_at || fav.addedAt, 
+          favoriteId: fav.Id || fav.id 
+        } : null;
       })
       .filter(Boolean);
 

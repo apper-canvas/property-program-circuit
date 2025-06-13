@@ -69,8 +69,7 @@ const BrowsePage = () => {
       console.error('Error loading favorites:', err);
     }
   };
-
-  const applyFilters = () => {
+const applyFilters = () => {
     let filtered = [...properties];
 
     // Search query filter (combining with location filter)
@@ -157,19 +156,19 @@ const BrowsePage = () => {
     setSearchQuery('');
   };
 
-  const toggleFavorite = async (propertyId) => {
+const toggleFavorite = async (propertyId) => {
     try {
-      const isFavorite = favorites.some(fav => fav.propertyId === propertyId);
+      const isFavorite = favorites.some(fav => (fav.property_id || fav.propertyId) === propertyId);
 
       if (isFavorite) {
-        const favorite = favorites.find(fav => fav.propertyId === propertyId);
-        await favoritesService.delete(favorite.id);
-        setFavorites(prev => prev.filter(fav => fav.propertyId !== propertyId));
+        const favorite = favorites.find(fav => (fav.property_id || fav.propertyId) === propertyId);
+        await favoritesService.delete(favorite.Id || favorite.id);
+        setFavorites(prev => prev.filter(fav => (fav.property_id || fav.propertyId) !== propertyId));
         toast.success('Removed from favorites');
       } else {
         const newFavorite = {
-          propertyId,
-          addedAt: new Date().toISOString()
+          property_id: propertyId,
+          added_at: new Date().toISOString()
         };
         const created = await favoritesService.create(newFavorite);
         setFavorites(prev => [...prev, created]);

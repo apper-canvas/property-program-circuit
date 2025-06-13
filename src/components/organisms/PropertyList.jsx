@@ -61,8 +61,8 @@ const PropertyList = ({
     return (
       <div className="space-y-6">
         <AnimatePresence>
-          {properties.map((property, index) => {
-            const isFavorite = favorites.some(fav => fav.propertyId === property.id);
+{properties.map((property, index) => {
+            const isFavorite = favorites.some(fav => (fav.property_id || fav.propertyId) === (property.Id || property.id));
             return (
               <motion.div
                 key={property.id}
@@ -125,8 +125,8 @@ const PropertyList = ({
                         </Text>
                       </div>
 
-                      <Button
-                        onClick={() => onToggleFavorite(property.id)}
+<Button
+                        onClick={() => onToggleFavorite(property.Id || property.id)}
                         className={`ml-4 p-3 rounded-full border-2 transition-colors ${
                           isFavorite
                             ? 'bg-red-50 border-red-200 text-red-600'
@@ -174,10 +174,10 @@ const PropertyList = ({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <AnimatePresence>
         {properties.map((property, index) => (
-          <PropertyCard
-            key={property.id}
+<PropertyCard
+            key={property.Id || property.id}
             property={property}
-            isFavorite={favorites.some((fav) => fav.propertyId === property.id)}
+            isFavorite={favorites.some((fav) => (fav.property_id || fav.propertyId) === (property.Id || property.id))}
             onToggleFavorite={onToggleFavorite}
             onViewDetails={onPropertyClick}
             showPropertyTypeBadge={showPropertyTypeBadge}
