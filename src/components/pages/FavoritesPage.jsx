@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import ApperIcon from '../components/ApperIcon';
-import { favoritesService, propertiesService } from '../services';
+import ApperIcon from '@/components/ApperIcon';
+import Button from '@/components/atoms/Button';
+import Text from '@/components/atoms/Text';
+import PropertyList from '@/components/organisms/PropertyList';
+import { favoritesService, propertiesService } from '@/services';
 
-const Favorites = () => {
+const FavoritesPage = () => {
   const [favorites, setFavorites] = useState([]);
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -36,10 +39,10 @@ const Favorites = () => {
     }
   };
 
-  const removeFavorite = async (favoriteId, propertyTitle) => {
+  const removeFavorite = async (propertyId, propertyTitle, favoriteIdToRemove) => {
     try {
-      await favoritesService.delete(favoriteId);
-      setFavorites(prev => prev.filter(fav => fav.id !== favoriteId));
+      await favoritesService.delete(favoriteIdToRemove);
+      setFavorites(prev => prev.filter(fav => fav.id !== favoriteIdToRemove));
       toast.success(`Removed "${propertyTitle}" from favorites`);
     } catch (err) {
       toast.error('Failed to remove from favorites');
@@ -48,9 +51,8 @@ const Favorites = () => {
 
   const clearAllFavorites = async () => {
     if (!window.confirm('Are you sure you want to remove all favorites?')) return;
-    
+
     try {
-      // Delete all favorites
       await Promise.all(favorites.map(fav => favoritesService.delete(fav.id)));
       setFavorites([]);
       toast.success('All favorites cleared');
@@ -67,7 +69,6 @@ const Favorites = () => {
       })
       .filter(Boolean);
 
-    // Sort properties
     return favoriteProperties.sort((a, b) => {
       switch (sortBy) {
         case 'newest':
@@ -134,14 +135,14 @@ const Favorites = () => {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <ApperIcon name="AlertCircle" className="w-16 h-16 text-error mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-primary mb-2">Error Loading Favorites</h3>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
+          <Text as="h3" className="text-lg font-semibold text-primary mb-2">Error Loading Favorites</Text>
+          <Text as="p" className="text-gray-600 mb-4">{error}</Text>
+          <Button
             onClick={loadData}
             className="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors"
           >
             Try Again
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -164,18 +165,19 @@ const Favorites = () => {
           >
             <ApperIcon name="Heart" className="w-16 h-16 text-gray-300 mx-auto" />
           </motion.div>
-          <h3 className="text-xl font-heading font-semibold text-primary mb-2">No Favorites Yet</h3>
-          <p className="text-gray-600 mb-6">
+          <Text as="h3" className="text-xl font-heading font-semibold text-primary mb-2">No Favorites Yet</Text>
+          <Text as="p" className="text-gray-600 mb-6">
             Start exploring properties and save your favorites to see them here.
-          </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          </Text>
+          <Button
             onClick={() => navigate('/browse')}
             className="px-6 py-3 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors font-medium"
+            as="motion.button"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             Browse Properties
-          </motion.button>
+          </Button>
         </motion.div>
       </div>
     );
@@ -187,8 +189,8 @@ const Favorites = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-heading font-bold text-primary mb-1">My Favorites</h1>
-            <p className="text-gray-600">{favoriteProperties.length} saved properties</p>
+            <Text as="h1" className="text-2xl font-heading font-bold text-primary mb-1">My Favorites</Text>
+            <Text as="p" className="text-gray-600">{favoriteProperties.length} saved properties</Text>
           </div>
           <div className="flex items-center space-x-4">
             {/* Sort Dropdown */}
@@ -202,109 +204,33 @@ const Favorites = () => {
               <option value="price-high">Price: High to Low</option>
               <option value="price-low">Price: Low to High</option>
             </select>
-            
+
             {/* Clear All Button */}
-            <button
+            <Button
               onClick={clearAllFavorites}
               className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
             >
               <ApperIcon name="Trash2" className="w-4 h-4" />
               <span>Clear All</span>
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Favorites Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <AnimatePresence>
-            {favoriteProperties.map((property, index) => (
-              <motion.div
-                key={property.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-lg shadow-card overflow-hidden property-card"
-              >
-                <div className="relative h-48 overflow-hidden gallery-container">
-                  <img
-                    src={property.images[0]}
-                    alt={property.title}
-                    className="w-full h-full object-cover cursor-pointer"
-                    onClick={() => navigate(`/property/${property.id}`)}
-                  />
-                  <div className="absolute inset-0 property-card-overlay" />
-                  
-                  {/* Remove from favorites button */}
-                  <button
-                    onClick={() => removeFavorite(property.favoriteId, property.title)}
-                    className="absolute top-3 right-3 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center text-red-600 hover:text-red-700 transition-colors"
-                  >
-                    <ApperIcon name="X" className="w-4 h-4" />
-                  </button>
-                  
-                  {/* Price tag */}
-                  <div className="absolute bottom-3 left-3 text-white">
-                    <div className="text-lg font-bold">{formatPrice(property.price)}</div>
-                  </div>
-                  
-                  {/* Added date */}
-                  <div className="absolute top-3 left-3 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                    Added {formatDate(property.addedAt)}
-                  </div>
-                </div>
-                
-                <div className="p-4">
-                  <h3 
-                    className="font-semibold text-primary text-lg mb-1 cursor-pointer hover:text-secondary transition-colors truncate"
-                    onClick={() => navigate(`/property/${property.id}`)}
-                  >
-                    {property.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm mb-3 flex items-center">
-                    <ApperIcon name="MapPin" className="w-4 h-4 mr-1 flex-shrink-0" />
-                    <span className="truncate">{property.address}, {property.city}</span>
-                  </p>
-                  
-                  <div className="flex items-center text-sm text-gray-600 mb-4 space-x-4">
-                    <span className="flex items-center">
-                      <ApperIcon name="Bed" className="w-4 h-4 mr-1" />
-                      {property.bedrooms}
-                    </span>
-                    <span className="flex items-center">
-                      <ApperIcon name="Bath" className="w-4 h-4 mr-1" />
-                      {property.bathrooms}
-                    </span>
-                    <span className="flex items-center">
-                      <ApperIcon name="Square" className="w-4 h-4 mr-1" />
-                      {property.squareFeet.toLocaleString()}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => navigate(`/property/${property.id}`)}
-                      className="flex-1 px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors font-medium"
-                    >
-                      View Details
-                    </motion.button>
-                    <button
-                      onClick={() => removeFavorite(property.favoriteId, property.title)}
-                      className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <ApperIcon name="Heart" className="w-5 h-5 fill-current" />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+        <PropertyList
+          properties={favoriteProperties}
+          favorites={favorites}
+          onToggleFavorite={removeFavorite} // Use removeFavorite specifically
+          onPropertyClick={(id) => navigate(`/property/${id}`)}
+          viewMode="grid" // Ensure grid view
+          showPropertyTypeBadge={false} // Don't need type badge
+          showRemoveButton={true} // Show 'X' remove button
+          formatPrice={formatPrice}
+          formatDate={formatDate}
+        />
       </div>
     </div>
   );
 };
 
-export default Favorites;
+export default FavoritesPage;

@@ -20,7 +20,9 @@ function App() {
                 />
               ))}
             </Route>
-            <Route path="*" element={<Navigate to="/browse" replace />} />
+</Route>
+            <Route path="*" element={<routes.notFound.component />} />
+          </Routes>
           </Routes>
         </AnimatePresence>
         

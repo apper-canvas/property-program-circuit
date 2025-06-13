@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import MainFeature from '../components/MainFeature';
-import ApperIcon from '../components/ApperIcon';
-import { propertiesService, filtersService, favoritesService } from '../services';
+import ApperIcon from '@/components/ApperIcon';
+import Button from '@/components/atoms/Button';
+import Text from '@/components/atoms/Text';
+import PropertyFilterSidebar from '@/components/organisms/PropertyFilterSidebar';
+import PropertyList from '@/components/organisms/PropertyList';
+import { propertiesService, favoritesService } from '@/services';
 
-const Browse = () => {
+const BrowsePage = () => {
   const [properties, setProperties] = useState([]);
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -26,7 +29,14 @@ const Browse = () => {
   });
 
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams(); // Use for initial search query from URL
+
+  useEffect(() => {
+    const urlSearchQuery = searchParams.get('search');
+    if (urlSearchQuery) {
+      setSearchQuery(urlSearchQuery);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     loadData();
@@ -63,15 +73,15 @@ const Browse = () => {
   const applyFilters = () => {
     let filtered = [...properties];
 
-    // Search query filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+    // Search query filter (combining with location filter)
+    const currentSearchQuery = searchQuery.trim().toLowerCase();
+    if (currentSearchQuery) {
       filtered = filtered.filter(property =>
-        property.title.toLowerCase().includes(query) ||
-        property.address.toLowerCase().includes(query) ||
-        property.city.toLowerCase().includes(query) ||
-        property.state.toLowerCase().includes(query) ||
-        property.propertyType.toLowerCase().includes(query)
+        property.title.toLowerCase().includes(currentSearchQuery) ||
+        property.address.toLowerCase().includes(currentSearchQuery) ||
+        property.city.toLowerCase().includes(currentSearchQuery) ||
+        property.state.toLowerCase().includes(currentSearchQuery) ||
+        property.propertyType.toLowerCase().includes(currentSearchQuery)
       );
     }
 
@@ -105,7 +115,7 @@ const Browse = () => {
       filtered = filtered.filter(property => property.squareFeet >= Number(filters.squareFeetMin));
     }
 
-    // Location filter
+    // Location filter (if separate from general search query)
     if (filters.location.trim()) {
       const location = filters.location.toLowerCase();
       filtered = filtered.filter(property =>
@@ -150,7 +160,7 @@ const Browse = () => {
   const toggleFavorite = async (propertyId) => {
     try {
       const isFavorite = favorites.some(fav => fav.propertyId === propertyId);
-      
+
       if (isFavorite) {
         const favorite = favorites.find(fav => fav.propertyId === propertyId);
         await favoritesService.delete(favorite.id);
@@ -168,6 +178,15 @@ const Browse = () => {
     } catch (err) {
       toast.error('Failed to update favorites');
     }
+  };
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
   };
 
   const propertyTypes = ['House', 'Apartment', 'Condo', 'Townhouse', 'Loft'];
@@ -202,14 +221,14 @@ const Browse = () => {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <ApperIcon name="AlertCircle" className="w-16 h-16 text-error mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-primary mb-2">Error Loading Properties</h3>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
+          <Text as="h3" className="text-lg font-semibold text-primary mb-2">Error Loading Properties</Text>
+          <Text as="p" className="text-gray-600 mb-4">{error}</Text>
+          <Button
             onClick={loadData}
             className="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors"
           >
             Try Again
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -218,142 +237,17 @@ const Browse = () => {
   return (
     <div className="flex h-full overflow-hidden">
       {/* Filter Sidebar */}
-      <AnimatePresence>
-        {showFilters && (
-          <motion.aside
-            initial={{ x: -300, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -300, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="w-80 bg-white border-r border-gray-200 overflow-y-auto z-30"
-          >
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-heading font-semibold text-primary">Filters</h2>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={clearFilters}
-                    className="text-sm text-accent hover:text-accent/80 transition-colors"
-                  >
-                    Clear All
-                  </button>
-                  <button
-                    onClick={() => setShowFilters(false)}
-                    className="md:hidden text-gray-400 hover:text-gray-600"
-                  >
-                    <ApperIcon name="X" className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Search */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Search Location
-                </label>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="City, state, or address..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
-                />
-              </div>
-
-              {/* Price Range */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Price Range
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="number"
-                    value={filters.priceMin}
-                    onChange={(e) => handleFilterChange('priceMin', e.target.value)}
-                    placeholder="Min Price"
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
-                  />
-                  <input
-                    type="number"
-                    value={filters.priceMax}
-                    onChange={(e) => handleFilterChange('priceMax', e.target.value)}
-                    placeholder="Max Price"
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
-                  />
-                </div>
-              </div>
-
-              {/* Property Types */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Property Type
-                </label>
-                <div className="space-y-2">
-                  {propertyTypes.map(type => (
-                    <label key={type} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={filters.propertyTypes.includes(type)}
-                        onChange={() => handlePropertyTypeToggle(type)}
-                        className="rounded border-gray-300 text-accent focus:ring-accent"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">{type}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bedrooms */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Minimum Bedrooms
-                </label>
-                <select
-                  value={filters.bedroomsMin}
-                  onChange={(e) => handleFilterChange('bedroomsMin', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
-                >
-                  <option value="">Any</option>
-                  {[1, 2, 3, 4, 5].map(num => (
-                    <option key={num} value={num}>{num}+</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Bathrooms */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Minimum Bathrooms
-                </label>
-                <select
-                  value={filters.bathroomsMin}
-                  onChange={(e) => handleFilterChange('bathroomsMin', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
-                >
-                  <option value="">Any</option>
-                  {[1, 1.5, 2, 2.5, 3, 3.5, 4].map(num => (
-                    <option key={num} value={num}>{num}+</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Square Feet */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Minimum Square Feet
-                </label>
-                <input
-                  type="number"
-                  value={filters.squareFeetMin}
-                  onChange={(e) => handleFilterChange('squareFeetMin', e.target.value)}
-                  placeholder="Min sq ft"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
-                />
-              </div>
-            </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
+      <PropertyFilterSidebar
+        showFilters={showFilters}
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        propertyTypes={propertyTypes}
+        onPropertyTypeToggle={handlePropertyTypeToggle}
+        onClearFilters={clearFilters}
+        onClose={() => setShowFilters(false)}
+      />
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
@@ -361,19 +255,19 @@ const Browse = () => {
         <div className="bg-white border-b border-gray-200 p-4 sticky top-0 z-20">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button
+              <Button
                 onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 <ApperIcon name="Filter" className="w-4 h-4" />
                 <span className="hidden sm:inline">Filters</span>
-              </button>
-              <span className="text-sm text-gray-600">
+              </Button>
+              <Text as="span" className="text-sm text-gray-600">
                 {filteredProperties.length} properties found
-              </span>
+              </Text>
             </div>
             <div className="flex items-center space-x-2">
-              <button
+              <Button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-lg transition-colors ${
                   viewMode === 'grid'
@@ -382,8 +276,8 @@ const Browse = () => {
                 }`}
               >
                 <ApperIcon name="Grid3X3" className="w-4 h-4" />
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setViewMode('list')}
                 className={`p-2 rounded-lg transition-colors ${
                   viewMode === 'list'
@@ -392,19 +286,20 @@ const Browse = () => {
                 }`}
               >
                 <ApperIcon name="List" className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           </div>
         </div>
 
         {/* Properties Grid/List */}
         <div className="p-6">
-          <MainFeature
+          <PropertyList
             properties={filteredProperties}
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
             viewMode={viewMode}
             onPropertyClick={(id) => navigate(`/property/${id}`)}
+            formatPrice={formatPrice}
           />
         </div>
       </main>
@@ -412,4 +307,4 @@ const Browse = () => {
   );
 };
 
-export default Browse;
+export default BrowsePage;
