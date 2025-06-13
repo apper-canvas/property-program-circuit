@@ -16,13 +16,11 @@ function App() {
                 <Route
                   key={route.id}
                   path={route.path}
-                  element={<route.component />}
+element={<route.component />}
                 />
               ))}
             </Route>
-</Route>
             <Route path="*" element={<routes.notFound.component />} />
-          </Routes>
           </Routes>
         </AnimatePresence>
         
