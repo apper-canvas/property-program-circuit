@@ -193,5 +193,3 @@ const favoritesService = {
 };
 
 export default favoritesService;
-
-export default favoritesService;
