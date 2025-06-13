@@ -56,6 +56,3 @@ export const routes = {
 
 export const routeArray = Object.values(routes);
 export const navRoutes = routeArray.filter(route => !route.hidden);
-
-export const routeArray = Object.values(routes);
-export const navRoutes = routeArray.filter(route => !route.hidden);
