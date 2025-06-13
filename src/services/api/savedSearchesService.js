@@ -163,5 +163,3 @@ const savedSearchesService = {
 };
 
 export default savedSearchesService;
-
-export default savedSearchesService;
